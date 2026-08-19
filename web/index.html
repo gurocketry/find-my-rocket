@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111e" />
+    <meta name="description" content="Offline-capable Astra ground-station GPS tracker" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/tracker.svg" type="image/svg+xml" />
+    <title>GUR Rocket Tracker</title>
+  </head>
+  <body>
+    <main id="app">
+      <section id="map" aria-label="Rocket tracking map"></section>
+
+      <header class="topbar panel">
+        <div>
+          <p class="eyebrow">GUR · FIELD OPERATIONS</p>
+          <h1>Rocket Tracker</h1>
+        </div>
+        <div id="connection-pill" class="pill offline"><span></span>OFFLINE</div>
+      </header>
+
+      <aside class="telemetry panel" aria-live="polite">
+        <div class="metric hero"><span>ALTITUDE</span><strong id="altitude">—</strong><small>m</small></div>
+        <div class="metric"><span>VERTICAL SPEED</span><strong id="vertical-speed">—</strong><small>m/s</small></div>
+        <div class="metric"><span>RANGE</span><strong id="range">—</strong><small>km</small></div>
+        <div class="metric"><span>SIGNAL</span><strong id="signal">—</strong><small>dBm</small></div>
+        <div class="metric"><span>SATELLITES</span><strong id="satellites">—</strong></div>
+        <div class="metric"><span>PACKETS</span><strong id="packet-count">0</strong></div>
+      </aside>
+
+      <section class="actions panel">
+        <div class="status-copy">
+          <span id="flight-stage" class="stage">WAITING FOR BOARD</span>
+          <span id="status-detail">Connect the Astra ground station over USB.</span>
+        </div>
+        <div class="button-row">
+          <button id="connect" class="primary">CONNECT BOARD</button>
+          <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="9600">9600</option><option value="115200">115200</option></select></label>
+          <button id="locate">MY LOCATION</button>
+          <button id="export" disabled>EXPORT LOG</button>
+        </div>
+      </section>
+
+      <details class="console panel">
+        <summary>PACKET LOG <span id="error-count">0 rejected</span></summary>
+        <ol id="packet-log"></ol>
+      </details>
+
+      <div id="install-banner" class="install panel" hidden>
+        <span>Install for offline field use</span>
+        <button id="install">INSTALL APP</button>
+      </div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

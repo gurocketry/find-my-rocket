@@ -1,0 +1,19 @@
+{
+  "name": "GUR Rocket Tracker",
+  "short_name": "Rocket Tracker",
+  "description": "Offline-capable Astra ground-station GPS tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07111e",
+  "theme_color": "#07111e",
+  "icons": [
+    {
+      "src": "./icons/tracker.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
