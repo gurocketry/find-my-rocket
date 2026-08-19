@@ -10,7 +10,9 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        python = pkgs.python3.withPackages (ps: with ps; [
+        # Python 3.14's NumPy currently aborts while loading libffi on macOS.
+        python = pkgs.python313.withPackages (ps: with ps; [
+          matplotlib
           pyserial
         ]);
       in
@@ -18,7 +20,8 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             python
-            pkgs.python3Packages.pyserial
+            pkgs.python313Packages.matplotlib
+            pkgs.python313Packages.pyserial
           ];
 
           shellHook = ''
@@ -37,7 +40,7 @@
           pname = "gps-tracker";
           version = "0.1.0";
           src = ./.;
-          propagatedBuildInputs = [ python.pkgs.pyserial ];
+          propagatedBuildInputs = with python.pkgs; [ matplotlib pyserial ];
         };
       });
 }
