@@ -1,8 +1,22 @@
-const CACHE = "gur-tracker-v2";
-const SHELL = ["./", "./manifest.webmanifest", "./icons/tracker.svg"];
+const CACHE = "gur-tracker-v3";
+
+async function cacheAppShell() {
+  const cache = await caches.open(CACHE);
+  const shellUrl = new URL("./", self.registration.scope);
+  const response = await fetch(shellUrl, { cache: "reload" });
+  if (!response.ok) throw new Error(`App shell returned ${response.status}`);
+
+  const html = await response.clone().text();
+  const assets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map((match) => new URL(match[1], shellUrl))
+    .filter((url) => url.origin === shellUrl.origin);
+
+  await cache.put(shellUrl, response);
+  await cache.addAll([...new Set(assets.map((url) => url.href))]);
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(cacheAppShell().then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {

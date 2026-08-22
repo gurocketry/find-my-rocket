@@ -1,7 +1,5 @@
 import { serial as webUsbSerial } from "web-serial-polyfill";
 
-const ASTRA_FILTERS = [{ usbVendorId: 0x1eaf, usbProductId: 0x0003 }];
-
 export function transportSupport() {
   if ("serial" in navigator) return { available: true, mode: "Web Serial" };
   if ("usb" in navigator) return { available: true, mode: "WebUSB serial" };
@@ -20,7 +18,7 @@ export class SerialConnection extends EventTarget {
   }
 
   async connect() {
-    this.port = await this.api.requestPort({ filters: ASTRA_FILTERS });
+    this.port = await this.api.requestPort();
     await this.port.open({ baudRate: this.baudRate, bufferSize: 4096 });
     this.reading = true;
     this.dispatchEvent(new CustomEvent("status", { detail: { connected: true, mode: this.mode } }));
