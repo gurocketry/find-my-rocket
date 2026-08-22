@@ -1,4 +1,4 @@
-const CACHE = "gur-tracker-v1";
+const CACHE = "gur-tracker-v2";
 const SHELL = ["./", "./manifest.webmanifest", "./icons/tracker.svg"];
 
 self.addEventListener("install", (event) => {

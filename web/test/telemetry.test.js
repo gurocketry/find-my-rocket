@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { FlightTrack, PacketFramer, parsePackets } from "../src/telemetry.js";
+import { FlightTrack, PacketFramer, bearingDegrees, parsePackets } from "../src/telemetry.js";
 
 test("parses Astra telemetry with and without timestamps", () => {
   const first = parsePackets("19:02:56.588 > 0, 00000001, 55.870758, -4.286921, 45.0, -31, 9");
@@ -43,4 +43,11 @@ test("flight state derives velocity and prediction in JavaScript", () => {
   assert.equal(track.launched, true);
   assert.ok(track.velocity.vertical > 5);
   assert.ok(track.prediction().length > 0);
+});
+
+test("calculates initial compass bearings", () => {
+  const origin = { lat: 0, lon: 0 };
+  assert.ok(Math.abs(bearingDegrees(origin, { lat: 1, lon: 0 })) < 0.001);
+  assert.ok(Math.abs(bearingDegrees(origin, { lat: 0, lon: 1 }) - 90) < 0.001);
+  assert.ok(Math.abs(bearingDegrees(origin, { lat: -1, lon: 0 }) - 180) < 0.001);
 });

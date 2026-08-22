@@ -42,3 +42,15 @@ export async function exportRecords() {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export async function exportRawLog() {
+  const records = await loadRecords();
+  const lines = records.filter((record) => record.record === "raw").map((record) => record.raw);
+  const text = lines.join("\n") + (lines.length ? "\n" : "");
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `astra-raw-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+}

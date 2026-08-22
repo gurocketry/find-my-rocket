@@ -11,9 +11,7 @@
   </head>
   <body>
     <main id="app">
-      <section id="map" aria-label="Rocket tracking map"></section>
-
-      <header class="topbar panel">
+      <header class="app-header">
         <div>
           <p class="eyebrow">GUR · FIELD OPERATIONS</p>
           <h1>Rocket Tracker</h1>
@@ -21,32 +19,69 @@
         <div id="connection-pill" class="pill offline"><span></span>OFFLINE</div>
       </header>
 
-      <aside class="telemetry panel" aria-live="polite">
-        <div class="metric hero"><span>ALTITUDE</span><strong id="altitude">—</strong><small>m</small></div>
-        <div class="metric"><span>VERTICAL SPEED</span><strong id="vertical-speed">—</strong><small>m/s</small></div>
-        <div class="metric"><span>RANGE</span><strong id="range">—</strong><small>km</small></div>
-        <div class="metric"><span>SIGNAL</span><strong id="signal">—</strong><small>dBm</small></div>
-        <div class="metric"><span>SATELLITES</span><strong id="satellites">—</strong></div>
-        <div class="metric"><span>PACKETS</span><strong id="packet-count">0</strong></div>
-      </aside>
+      <section id="map-view" class="tab-view active" role="tabpanel" aria-labelledby="map-tab">
+        <div id="map" aria-label="Rocket tracking map"></div>
+        <aside class="telemetry panel" aria-live="polite">
+          <div class="metric hero"><span>ALTITUDE</span><strong id="altitude">—</strong><small>m</small></div>
+          <div class="metric"><span>VERTICAL SPEED</span><strong id="vertical-speed">—</strong><small>m/s</small></div>
+          <div class="metric"><span>RANGE</span><strong id="range">—</strong><small>km</small></div>
+          <div class="metric"><span>SIGNAL</span><strong id="signal">—</strong><small>dBm</small></div>
+          <div class="metric"><span>SATELLITES</span><strong id="satellites">—</strong></div>
+          <div class="metric"><span>PACKETS</span><strong id="packet-count">0</strong></div>
+        </aside>
+        <section class="actions panel">
+          <div class="status-copy">
+            <span id="flight-stage" class="stage">WAITING FOR BOARD</span>
+            <span id="status-detail">Connect the Astra ground station over USB.</span>
+          </div>
+          <div class="button-row">
+            <button id="connect" class="primary">CONNECT BOARD</button>
+            <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="9600">9600</option><option value="115200">115200</option></select></label>
+            <button id="locate">MY LOCATION</button>
+          </div>
+        </section>
+      </section>
 
-      <section class="actions panel">
-        <div class="status-copy">
-          <span id="flight-stage" class="stage">WAITING FOR BOARD</span>
-          <span id="status-detail">Connect the Astra ground station over USB.</span>
+      <section id="compass-view" class="tab-view compass-view" role="tabpanel" aria-labelledby="compass-tab" hidden>
+        <div class="compass-copy">
+          <p class="eyebrow">OFFLINE RECOVERY</p>
+          <h2>Direction to rocket</h2>
+          <p id="compass-status">Waiting for your location and rocket telemetry.</p>
         </div>
-        <div class="button-row">
-          <button id="connect" class="primary">CONNECT BOARD</button>
-          <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="9600">9600</option><option value="115200">115200</option></select></label>
-          <button id="locate">MY LOCATION</button>
-          <button id="export" disabled>EXPORT LOG</button>
+        <div class="compass-dial" aria-label="Direction to rocket">
+          <span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">W</span>
+          <div id="compass-arrow" class="compass-arrow"><span></span></div>
+          <div class="compass-centre"></div>
+        </div>
+        <div class="compass-readout panel" aria-live="polite">
+          <div><span>DISTANCE</span><strong id="compass-distance">—</strong></div>
+          <div><span>BEARING</span><strong id="compass-bearing">—</strong></div>
+          <div><span>PHONE HEADING</span><strong id="compass-heading">—</strong></div>
+          <div><span>ROCKET FIX</span><strong id="compass-fix">—</strong></div>
+        </div>
+        <div class="compass-actions">
+          <button id="compass-locate" class="primary">USE MY LOCATION</button>
+          <button id="enable-compass">ENABLE COMPASS</button>
         </div>
       </section>
 
-      <details class="console panel">
-        <summary>PACKET LOG <span id="error-count">0 rejected</span></summary>
-        <ol id="packet-log"></ol>
-      </details>
+      <section id="log-view" class="tab-view log-view" role="tabpanel" aria-labelledby="log-tab" hidden>
+        <div class="log-header">
+          <div>
+            <p class="eyebrow">ASTRA SERIAL STREAM</p>
+            <h2>Raw log</h2>
+            <p><span id="raw-count">0 lines</span> · <span id="error-count">0 rejected</span></p>
+          </div>
+          <button id="save-log" class="primary" disabled>SAVE .TXT</button>
+        </div>
+        <pre id="raw-log" tabindex="0" aria-label="Raw Astra serial output">Waiting for serial data…</pre>
+      </section>
+
+      <nav class="tab-bar" role="tablist" aria-label="Tracker mode">
+        <button id="map-tab" class="tab active" role="tab" aria-selected="true" aria-controls="map-view" data-view="map-view"><span>⌖</span>MAP</button>
+        <button id="compass-tab" class="tab" role="tab" aria-selected="false" aria-controls="compass-view" data-view="compass-view"><span>➤</span>COMPASS</button>
+        <button id="log-tab" class="tab" role="tab" aria-selected="false" aria-controls="log-view" data-view="log-view"><span>≡</span>LOG</button>
+      </nav>
 
       <div id="install-banner" class="install panel" hidden>
         <span>Install for offline field use</span>

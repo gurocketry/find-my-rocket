@@ -87,3 +87,22 @@ next intact packet to be recovered even when a delimiter or packet is lost.
 Launch is declared after at least four fixes, 15 m of altitude gain, and at least 5 m/s vertical speed. The cyan dashed line is a continuously updated ballistic estimate derived from recent GPS velocity and standard gravity. It is a visualization aid, not a range-safety or flight-control system; wind, drag, thrust, and terrain are not modeled.
 
 The 3D globe loads Cesium, Cesium World Terrain, and OpenStreetMap tiles from the internet. Their automatically generated on-screen credits remain visible to satisfy attribution requirements. Telemetry stays on the local machine. For anything beyond local development, create a dedicated Cesium token with only `assets:read`, restrict it to the World Terrain asset and your app URL, and monitor its usage in the ion dashboard.
+
+## Web Serial PWA
+
+The `web-serial-pwa` branch contains an installable mobile ground station under
+`web/`. It connects directly to the Astra board from a supported browser and has
+three separate field views:
+
+- **Map** shows the live flight path, prediction, telemetry, and phone position.
+- **Compass** points from the phone's current GPS fix toward the latest rocket fix
+  without depending on map tiles. Tap both permission buttons, then hold the phone
+  flat; recalibrate with a figure-eight motion if the heading drifts.
+- **Log** shows the exact scrollable serial text, including malformed input and
+  recovery messages, and saves the complete device-local raw history as a `.txt`
+  file.
+
+Run the web app locally with `cd web && npm install && npm run dev`. USB, location,
+and orientation access require browser permission and a secure context (HTTPS or
+localhost). Previously loaded app assets and map tiles remain available offline;
+the compass and serial log do not require map connectivity.
