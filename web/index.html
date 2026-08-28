@@ -16,7 +16,13 @@
           <p class="eyebrow">GUR · FIELD OPERATIONS</p>
           <h1>Rocket Tracker</h1>
         </div>
-        <div id="connection-pill" class="pill offline"><span></span>OFFLINE</div>
+        <div class="header-status">
+          <div class="last-packet">
+            <span>LAST PACKET</span>
+            <time id="last-packet-time">—</time>
+          </div>
+          <div id="connection-pill" class="pill offline"><span></span>OFFLINE</div>
+        </div>
       </header>
 
       <section id="map-view" class="tab-view active" role="tabpanel" aria-labelledby="map-tab">
@@ -36,7 +42,7 @@
           </div>
           <div class="button-row">
             <button id="connect" class="primary">CONNECT BOARD</button>
-            <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="9600">9600</option><option value="115200">115200</option></select></label>
+            <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="115200">115200</option><option value="9600">9600</option></select></label>
             <button id="locate">MY LOCATION</button>
           </div>
         </section>
@@ -72,14 +78,46 @@
             <h2>Raw log</h2>
             <p><span id="raw-count">0 lines</span> · <span id="error-count">0 rejected</span></p>
           </div>
-          <button id="save-log" class="primary" disabled>SAVE .TXT</button>
+          <div class="log-actions">
+            <button id="clear-log" class="danger" disabled>CLEAR LOG</button>
+            <button id="save-log" class="primary" disabled>SAVE .TXT</button>
+          </div>
         </div>
         <pre id="raw-log" tabindex="0" aria-label="Raw Astra serial output">Waiting for serial data…</pre>
+      </section>
+
+      <section id="mesh-view" class="tab-view mesh-view" role="tabpanel" aria-labelledby="mesh-tab" hidden>
+        <div class="mesh-header">
+          <div>
+            <p class="eyebrow">GROUND-STATION RADIO</p>
+            <h2>Mesh health</h2>
+            <p>Live packet delivery, relay health, and per-node activity.</p>
+          </div>
+          <strong id="mesh-state" class="mesh-state mesh-never">NEVER</strong>
+        </div>
+        <div class="mesh-summary">
+          <div class="mesh-card panel"><span>NODES SEEN</span><strong id="mesh-node-count">0</strong></div>
+          <div class="mesh-card panel"><span>PACKETS RX</span><strong id="mesh-rx">0</strong></div>
+          <div class="mesh-card panel"><span>ACCEPTED</span><strong id="mesh-accepted">—</strong></div>
+          <div class="mesh-card panel"><span>DUPLICATES</span><strong id="mesh-duplicates">0</strong></div>
+          <div class="mesh-card panel"><span>AVG RSSI</span><strong id="mesh-rssi">—</strong><small>dBm</small></div>
+          <div class="mesh-card panel"><span>AVG SNR</span><strong id="mesh-snr">—</strong><small>dB</small></div>
+          <div class="mesh-card panel"><span>RELAYED</span><strong id="mesh-relayed">—</strong></div>
+          <div class="mesh-card panel"><span>QUEUE / DROPS</span><strong id="mesh-queue">— / —</strong></div>
+        </div>
+        <div class="mesh-table-wrap panel">
+          <table class="mesh-table">
+            <thead><tr><th>NODE</th><th>TYPE</th><th>SEEN</th><th>UNIQUE</th><th>DUP</th><th>GAPS</th><th>LAST SEQ</th><th>AGE</th></tr></thead>
+            <tbody id="mesh-nodes-body"><tr><td colspan="8">Waiting for mesh packets…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="mesh-note">SEEN counts every decoded packet from a node. GAPS estimates sequence numbers not observed by this ground station.</p>
       </section>
 
       <nav class="tab-bar" role="tablist" aria-label="Tracker mode">
         <button id="map-tab" class="tab active" role="tab" aria-selected="true" aria-controls="map-view" data-view="map-view"><span>⌖</span>MAP</button>
         <button id="compass-tab" class="tab" role="tab" aria-selected="false" aria-controls="compass-view" data-view="compass-view"><span>➤</span>COMPASS</button>
+        <button id="mesh-tab" class="tab" role="tab" aria-selected="false" aria-controls="mesh-view" data-view="mesh-view"><span>◌</span>MESH</button>
         <button id="log-tab" class="tab" role="tab" aria-selected="false" aria-controls="log-view" data-view="log-view"><span>≡</span>LOG</button>
       </nav>
 

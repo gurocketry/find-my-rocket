@@ -21,16 +21,30 @@ LAN IP requires HTTPS.
 The app does not restrict the picker to a specific USB vendor or product ID.
 Choose the ground station from the browser's serial-device prompt. This allows
 both the Astra firmware identity and boards using the STM32 CDC identity
-`0483:5740` to connect without an app update. The default baud is `9600`,
-matching Astra's current ground-station reader.
+`0483:5740` to connect without an app update. The default baud is `115200`,
+matching the current ground-station firmware.
 
-The connection panel also offers `115200` for receivers using the GPS tracker's
-newer high-speed configuration.
+The connection panel also offers `9600` for legacy receivers.
+
+The current serial format identifies every mesh source and sequence number. Flight
+packets look like `[0-42] [flight] state, flags, latitude, longitude, altitude`;
+ground station pings look like `[3-7] latitude, longitude, altitude`. The Mesh tab combines
+these packet records with the periodic positional `[health]rssi, avg_rssi, snr, ...`
+CSV line to show radio, relay, queue,
+duplicate, sequence-gap, and per-node delivery information. Other ground stations
+appear as orange dots at their latest fix on the map; their movement is not drawn
+as a path.
 
 Desktop Chromium uses native Web Serial and shows all serial ports. Chrome on
-Android automatically uses the WebUSB-backed Serial API polyfill, so its picker
-shows USB CDC devices; the phone needs USB host/OTG support and an OTG cable.
-The board must expose an accessible USB CDC-ACM interface.
+Android uses WebUSB: the app first shows every non-blocklisted USB device, then
+validates that the selected device exposes standard CDC-ACM control (class 2)
+and data (class 10) interfaces. This avoids the polyfill's class-only chooser
+filter, which can hide some STM32 devices before permission is granted. The
+phone still needs USB host/OTG support and an OTG cable.
+
+Close any native serial app before connecting because Android allows only one
+application to own the USB interface. Open the installed PWA from Chrome rather
+than an embedded browser inside another app.
 
 The first connection must be initiated with the **Connect board** button so the
 browser can show its device permission picker. iOS/Safari and Firefox do not

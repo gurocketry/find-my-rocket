@@ -1,16 +1,22 @@
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
 import L from "leaflet";
-import { FlightTrack, PacketFramer, STAGES, bearingDegrees, distanceMetres, parsePackets } from "./telemetry.js";
+import {
+  FlightTrack, MeshNetwork, PacketFramer, STAGES, bearingDegrees, distanceMetres,
+  parseHealthLine, parsePackets,
+} from "./telemetry.js";
 import { SerialConnection, transportSupport } from "./serial.js";
-import { exportRawLog, loadRecords, storeRecord } from "./storage.js";
+import { clearRecords, exportRawLog, loadRecords, storeRecord } from "./storage.js";
 
 const elements = Object.fromEntries([
   "connect", "baud", "locate", "install", "install-banner", "connection-pill",
+  "last-packet-time",
   "flight-stage", "status-detail", "altitude", "vertical-speed", "range", "signal",
-  "satellites", "packet-count", "error-count", "raw-count", "raw-log", "save-log",
+  "satellites", "packet-count", "error-count", "raw-count", "raw-log", "save-log", "clear-log",
   "compass-locate", "enable-compass", "compass-status", "compass-arrow", "compass-distance",
   "compass-bearing", "compass-heading", "compass-fix",
+  "mesh-state", "mesh-node-count", "mesh-rx", "mesh-accepted", "mesh-duplicates",
+  "mesh-rssi", "mesh-snr", "mesh-relayed", "mesh-queue", "mesh-nodes-body",
 ].map((id) => [id, document.getElementById(id)]));
 
 const map = L.map("map", { zoomControl: false, attributionControl: true }).setView([55.8708, -4.2898], 14);
@@ -22,14 +28,17 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 const rocketIcon = L.divIcon({ className: "rocket-marker", html: "<span>▲</span>", iconSize: [34, 34], iconAnchor: [17, 17] });
 const userIcon = L.divIcon({ className: "user-marker", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 11] });
+const groundStationIcon = L.divIcon({ className: "ground-station-marker", html: "<span></span>", iconSize: [26, 26], iconAnchor: [13, 13] });
 const rocketMarker = L.marker([55.8708, -4.2898], { icon: rocketIcon, zIndexOffset: 1000 }).addTo(map).bindTooltip("ROCKET", { permanent: true, direction: "top", offset: [0, -14] });
 const userMarker = L.marker([0, 0], { icon: userIcon, zIndexOffset: 900 });
 const accuracyCircle = L.circle([0, 0], { radius: 1, color: "#62f5a5", fillOpacity: 0.12, weight: 1 });
 const flownLine = L.polyline([], { color: "#ff5576", weight: 4 }).addTo(map);
 const predictionLine = L.polyline([], { color: "#42d9ff", weight: 3, dashArray: "9 10" }).addTo(map);
+const groundStationMarkers = new Map();
 
-const track = new FlightTrack();
-const framer = new PacketFramer();
+let track = new FlightTrack();
+let mesh = new MeshNetwork();
+let framer = new PacketFramer();
 const rawLines = [];
 let rawStoreQueue = Promise.resolve();
 let connection = null;
@@ -41,12 +50,25 @@ let orientationListening = false;
 let rejectedCount = 0;
 let hasCentered = false;
 let deferredInstall = null;
+let trackedFlightNode = null;
 
 function setConnection(connected, detail) {
   elements["connection-pill"].className = `pill ${connected ? "online" : "offline"}`;
   elements["connection-pill"].innerHTML = `<span></span>${connected ? detail : "OFFLINE"}`;
   elements.connect.textContent = connected ? "DISCONNECT" : "CONNECT BOARD";
   elements["status-detail"].textContent = connected ? `Receiving Astra telemetry via ${detail}.` : detail;
+}
+
+function setLastPacket(receivedAt) {
+  const date = new Date(receivedAt);
+  if (Number.isNaN(date.getTime())) return;
+  elements["last-packet-time"].dateTime = date.toISOString();
+  elements["last-packet-time"].textContent = date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  elements["last-packet-time"].title = date.toLocaleString();
 }
 
 function appendRawLine(raw, { persist = true } = {}) {
@@ -57,6 +79,7 @@ function appendRawLine(raw, { persist = true } = {}) {
   elements["raw-log"].scrollTop = elements["raw-log"].scrollHeight;
   elements["raw-count"].textContent = `${rawLines.length} ${rawLines.length === 1 ? "line" : "lines"}`;
   elements["save-log"].disabled = false;
+  elements["clear-log"].disabled = false;
   if (persist) {
     rawStoreQueue = rawStoreQueue
       .then(() => storeRecord({ record: "raw", transport: connection?.mode || null, raw }))
@@ -112,11 +135,11 @@ function render(point) {
   const points = track.points.map((row) => [row.lat, row.lon]);
   flownLine.setLatLngs(points);
   predictionLine.setLatLngs(track.prediction().map((row) => [row.lat, row.lon]));
-  rocketMarker.setLatLng([point.lat, point.lon]);
+  rocketMarker.setLatLng([point.lat, point.lon]).addTo(map);
   elements.altitude.textContent = point.alt.toFixed(1);
   elements["vertical-speed"].textContent = track.velocity.vertical.toFixed(1);
-  elements.signal.textContent = point.rssi;
-  elements.satellites.textContent = point.sats;
+  elements.signal.textContent = point.rssi ?? mesh.health?.rssi ?? "—";
+  elements.satellites.textContent = point.sats ?? "—";
   elements["packet-count"].textContent = track.points.length;
   elements["flight-stage"].textContent = STAGES.get(point.stage) || "UNKNOWN";
   elements["flight-stage"].className = `stage stage-${point.stage}`;
@@ -128,8 +151,126 @@ function render(point) {
   }
 }
 
+function updateGroundStationMarker(packet) {
+  if (packet.lat === 0 && packet.lon === 0) return;
+  let marker = groundStationMarkers.get(packet.sender);
+  if (!marker) {
+    marker = L.marker([packet.lat, packet.lon], { icon: groundStationIcon, zIndexOffset: 800 })
+      .addTo(map)
+      .bindTooltip(`GROUND ${packet.sender}`, { permanent: true, direction: "top", offset: [0, -12] });
+    groundStationMarkers.set(packet.sender, marker);
+  } else {
+    marker.setLatLng([packet.lat, packet.lon]);
+  }
+}
+
+function healthValue(key, fallback = "—") {
+  return mesh.health?.[key] ?? fallback;
+}
+
+function renderMesh() {
+  const nodes = mesh.snapshot();
+  elements["mesh-node-count"].textContent = nodes.length;
+  elements["mesh-rx"].textContent = healthValue("rx", nodes.reduce((sum, node) => sum + node.packets, 0));
+  elements["mesh-accepted"].textContent = healthValue("accepted");
+  elements["mesh-duplicates"].textContent = healthValue("duplicates", nodes.reduce((sum, node) => sum + node.duplicates, 0));
+  elements["mesh-rssi"].textContent = healthValue("avg_rssi");
+  elements["mesh-snr"].textContent = healthValue("avg_snr");
+  elements["mesh-relayed"].textContent = healthValue("relayed");
+  elements["mesh-queue"].textContent = `${healthValue("queue")} / ${healthValue("queue_drops")}`;
+  const state = healthValue("mesh", nodes.length ? "active" : "never");
+  elements["mesh-state"].textContent = String(state).toUpperCase();
+  elements["mesh-state"].className = `mesh-state mesh-${state}`;
+
+  const rows = nodes.map((node) => {
+    const row = document.createElement("tr");
+    const ageSeconds = Math.max(0, Math.round((Date.now() - new Date(node.lastSeen).getTime()) / 1000));
+    const cells = [
+      node.id,
+      node.kind === "ground" ? "GROUND" : "FLIGHT",
+      node.packets,
+      node.uniquePackets,
+      node.duplicates,
+      node.missedPackets,
+      node.lastSequence,
+      `${ageSeconds}s`,
+    ];
+    for (const value of cells) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    return row;
+  });
+  if (!rows.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.textContent = "Waiting for mesh packets…";
+    row.append(cell);
+    rows.push(row);
+  }
+  elements["mesh-nodes-body"].replaceChildren(...rows);
+}
+
+function resetTelemetryState() {
+  track = new FlightTrack();
+  mesh = new MeshNetwork();
+  framer = new PacketFramer();
+  rawLines.length = 0;
+  rejectedCount = 0;
+  trackedFlightNode = null;
+  hasCentered = false;
+
+  flownLine.setLatLngs([]);
+  predictionLine.setLatLngs([]);
+  rocketMarker.remove();
+  groundStationMarkers.forEach((marker) => marker.remove());
+  groundStationMarkers.clear();
+
+  elements["raw-log"].textContent = "Waiting for serial data…";
+  elements["raw-count"].textContent = "0 lines";
+  elements["error-count"].textContent = "0 rejected";
+  elements["save-log"].disabled = true;
+  elements["clear-log"].disabled = true;
+  elements["last-packet-time"].removeAttribute("datetime");
+  elements["last-packet-time"].removeAttribute("title");
+  elements["last-packet-time"].textContent = "—";
+  elements.altitude.textContent = "—";
+  elements["vertical-speed"].textContent = "—";
+  elements.range.textContent = "—";
+  elements.signal.textContent = "—";
+  elements.satellites.textContent = "—";
+  elements["packet-count"].textContent = "0";
+  elements["flight-stage"].textContent = "WAITING FOR TELEMETRY";
+  elements["flight-stage"].className = "stage";
+  elements["compass-distance"].textContent = "—";
+  elements["compass-bearing"].textContent = "—";
+  renderCompass();
+  renderMesh();
+}
+
 async function accept(packet) {
-  const point = track.add(packet);
+  const receivedAt = new Date();
+  const observation = mesh.observe(packet, receivedAt);
+  setLastPacket(receivedAt);
+  renderMesh();
+
+  if (packet.kind === "ground") {
+    updateGroundStationMarker(packet);
+    await storeRecord({ record: "mesh", transport: connection?.mode, receivedAt: receivedAt.toISOString(), packet }).catch(() => {});
+    return;
+  }
+  if (observation?.duplicate) {
+    await storeRecord({ record: "mesh", transport: connection?.mode, receivedAt: receivedAt.toISOString(), packet }).catch(() => {});
+    return;
+  }
+  if (packet.sender !== null && trackedFlightNode !== null && packet.sender !== trackedFlightNode) {
+    await storeRecord({ record: "mesh", transport: connection?.mode, receivedAt: receivedAt.toISOString(), packet }).catch(() => {});
+    return;
+  }
+  if (packet.sender !== null && trackedFlightNode === null) trackedFlightNode = packet.sender;
+  const point = track.add(packet, receivedAt);
   render(point);
   await storeRecord({ record: "telemetry", transport: connection?.mode, point }).catch((error) => {
     elements["status-detail"].textContent = `Telemetry active; local log failed: ${error.message}`;
@@ -144,6 +285,12 @@ async function processText(text) {
   }
   for (const line of framed.lines) {
     appendRawLine(line);
+    const health = parseHealthLine(line);
+    if (health) {
+      mesh.updateHealth(health);
+      renderMesh();
+      continue;
+    }
     const parsed = parsePackets(line);
     for (const raw of parsed.rejected) await reject(raw);
     for (const packet of parsed.packets) await accept(packet);
@@ -238,6 +385,21 @@ elements["save-log"].addEventListener("click", async () => {
   await rawStoreQueue;
   await exportRawLog();
 });
+elements["clear-log"].addEventListener("click", async () => {
+  if (!window.confirm("Clear all saved and current telemetry from every page? This cannot be undone.")) return;
+  elements["clear-log"].disabled = true;
+  await rawStoreQueue;
+  try {
+    await clearRecords();
+    resetTelemetryState();
+    elements["status-detail"].textContent = connection?.reading
+      ? "Telemetry cleared. Still connected and waiting for the next packet."
+      : "Telemetry cleared. Connect the Astra ground station to start a new log.";
+  } catch (error) {
+    elements["clear-log"].disabled = false;
+    elements["status-detail"].textContent = `Could not clear saved telemetry: ${error.message}`;
+  }
+});
 
 document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
   document.querySelectorAll(".tab-view").forEach((view) => {
@@ -282,7 +444,15 @@ loadRecords().then((records) => {
   savedRaw.slice(-5000).forEach((record) => appendRawLine(record.raw, { persist: false }));
   rejectedCount = records.filter((record) => record.record === "rejected").length;
   elements["error-count"].textContent = `${rejectedCount} rejected`;
-  if (records.length) elements["status-detail"].textContent += ` ${records.length} saved records available.`;
+  const latestTelemetry = records.filter((record) => record.record === "telemetry").at(-1);
+  if (latestTelemetry?.point?.receivedAt) setLastPacket(latestTelemetry.point.receivedAt);
+  if (records.length) {
+    elements["clear-log"].disabled = false;
+    elements["status-detail"].textContent += ` ${records.length} saved records available.`;
+  }
 }).catch(() => {});
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+
+renderMesh();
+setInterval(renderMesh, 1000);

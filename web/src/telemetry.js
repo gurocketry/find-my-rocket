@@ -12,6 +12,13 @@ export const STAGES = new Map([
 
 const PACKET_SOURCE = String.raw`(?:(\d{2}:\d{2}:\d{2}\.\d{3})\s*>\s*)?((?:[0-4]|255))\s*,\s*([0-9a-fA-F]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*(-?\d+)\s*,\s*(\d+?)`;
 const NEXT_PACKET = String.raw`(?=\s*(?:(?:\d{2}:\d{2}:\d{2}\.\d{3}\s*>\s*)?(?:[0-4]|255)\s*,\s*[0-9a-fA-F]+\s*,\s*[-\d.]+\s*,|$))`;
+const MESH_PACKET_RE = /^(?:(\d{2}:\d{2}:\d{2}\.\d{3})\s*>\s*)?(?:(\d{1,3})\((\d{1,5})\):|\[(\d{1,3})-(\d{1,5})\])\s*(\[flight\]\s*)?(.+?)\s*$/;
+const HEALTH_RE = /^\[health\]\s*,?\s*(.+)$/;
+const HEALTH_FIELDS = [
+  "rssi", "avg_rssi", "snr", "avg_snr", "rx", "accepted", "rejected", "invalid",
+  "duplicates", "queue", "queue_drops", "relayed", "relay_failures", "pings",
+  "ping_failures", "mesh", "mesh_rx_age_ms", "mesh_age_ms",
+];
 
 function packetRegex() {
   return new RegExp(PACKET_SOURCE + NEXT_PACKET, "g");
@@ -23,6 +30,39 @@ export function clockSeconds(value) {
 }
 
 export function parsePackets(raw) {
+  const meshMatch = raw.trim().match(MESH_PACKET_RE);
+  if (meshMatch) {
+    const [, timestamp, oldSender, oldSequence, newSender, newSequence, flightMarker, payloadText] = meshMatch;
+    const senderText = oldSender ?? newSender;
+    const sequenceText = oldSequence ?? newSequence;
+    const sender = Number(senderText);
+    const sequence = Number(sequenceText);
+    const fields = payloadText.split(",").map((field) => field.trim());
+    let packet = null;
+
+    if (!flightMarker && fields.length === 3) {
+      const [lat, lon, alt] = fields.map(Number);
+      packet = {
+        kind: "ground", sender, sequence, timestamp: timestamp || null,
+        lat, lon, alt, stage: null, flags: null, rssi: null, sats: null, raw: meshMatch[0],
+      };
+    } else if (fields.length === 5) {
+      const [stage, flags, lat, lon, alt] = fields;
+      packet = {
+        kind: "flight", sender, sequence, timestamp: timestamp || null,
+        stage: Number(stage), flags, lat: Number(lat), lon: Number(lon), alt: Number(alt),
+        rssi: null, sats: null, raw: meshMatch[0],
+      };
+    }
+
+    const valid = packet && sender >= 0 && sender <= 15 && sequence >= 0 && sequence <= 65535 &&
+      Number.isFinite(packet.lat) && packet.lat >= -90 && packet.lat <= 90 &&
+      Number.isFinite(packet.lon) && packet.lon >= -180 && packet.lon <= 180 &&
+      Number.isFinite(packet.alt) && (packet.kind === "ground" || !(packet.lat === 0 && packet.lon === 0)) &&
+      (packet.kind === "ground" || STAGES.has(packet.stage));
+    return valid ? { packets: [packet], rejected: [] } : { packets: [], rejected: [raw.trim()] };
+  }
+
   const packets = [];
   const rejected = [];
   const regex = packetRegex();
@@ -36,6 +76,9 @@ export function parsePackets(raw) {
     consumed = regex.lastIndex;
     const [, timestamp, stage, flags, lat, lon, alt, rssi, sats] = match;
     const packet = {
+      kind: "flight",
+      sender: null,
+      sequence: null,
       timestamp: timestamp || null,
       stage: Number(stage),
       flags,
@@ -65,6 +108,79 @@ export function parsePackets(raw) {
     rejected.push(raw.slice(consumed).trim());
   }
   return { packets, rejected };
+}
+
+export function parseHealthLine(raw, receivedAt = new Date()) {
+  const match = raw.trim().match(HEALTH_RE);
+  if (!match) return null;
+  const health = { receivedAt: receivedAt.toISOString() };
+  const parseValue = (value) => /^-?\d+$/.test(value) ? Number(value) : value;
+
+  if (match[1].includes("=")) {
+    for (const field of match[1].matchAll(/([a-z_]+)=([^\s]+)/g)) {
+      health[field[1]] = parseValue(field[2]);
+    }
+  } else {
+    const values = match[1].split(",").map((value) => value.trim());
+    if (values.length !== HEALTH_FIELDS.length) return null;
+    HEALTH_FIELDS.forEach((field, index) => {
+      health[field] = parseValue(values[index]);
+    });
+  }
+  return health;
+}
+
+export class MeshNetwork {
+  constructor() {
+    this.nodes = new Map();
+    this.health = null;
+  }
+
+  observe(packet, receivedAt = new Date()) {
+    if (packet.sender === null || packet.sender === undefined) return null;
+    const node = this.nodes.get(packet.sender) || {
+      id: packet.sender,
+      kind: packet.kind,
+      packets: 0,
+      uniquePackets: 0,
+      duplicates: 0,
+      missedPackets: 0,
+      lastSequence: null,
+      lastSeen: null,
+      position: null,
+    };
+    node.kind = packet.kind;
+    node.packets += 1;
+    let duplicate = false;
+    if (node.lastSequence === null) {
+      node.uniquePackets += 1;
+      node.lastSequence = packet.sequence;
+    } else {
+      const forward = (packet.sequence - node.lastSequence + 65536) % 65536;
+      if (forward === 0 || forward > 32768) {
+        node.duplicates += 1;
+        duplicate = true;
+      } else {
+        node.uniquePackets += 1;
+        node.missedPackets += Math.max(0, forward - 1);
+        node.lastSequence = packet.sequence;
+      }
+    }
+    node.lastSeen = receivedAt.toISOString();
+    if (packet.lat !== 0 || packet.lon !== 0) {
+      node.position = { lat: packet.lat, lon: packet.lon, alt: packet.alt };
+    }
+    this.nodes.set(packet.sender, node);
+    return { node, duplicate };
+  }
+
+  updateHealth(health) {
+    this.health = health;
+  }
+
+  snapshot() {
+    return [...this.nodes.values()].sort((a, b) => a.id - b.id);
+  }
 }
 
 export class PacketFramer {

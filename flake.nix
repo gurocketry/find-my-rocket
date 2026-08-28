@@ -22,15 +22,18 @@
             python
             pkgs.python313Packages.matplotlib
             pkgs.python313Packages.pyserial
+            pkgs.nodejs_22
           ];
 
           shellHook = ''
             echo "GPS Tracker dev shell"
             echo "Python: $(python --version)"
+            echo "Node: $(node --version)"
             echo ""
             echo "Usage:"
             echo "  python gps_tracker.py -p /dev/cu.usbmodem3665388B32321 -b 115200"
             echo "  python gps_tracker.py --kml track.kml"
+            echo "  cd web && npm install && npm run dev"
             echo ""
             echo "Then open http://localhost:8080"
           '';

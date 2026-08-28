@@ -1,4 +1,4 @@
-const CACHE = "gur-tracker-v3";
+const CACHE = "gur-tracker-v4";
 
 async function cacheAppShell() {
   const cache = await caches.open(CACHE);

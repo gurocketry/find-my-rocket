@@ -32,6 +32,16 @@ export async function loadRecords() {
   });
 }
 
+export async function clearRecords() {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, "readwrite");
+    transaction.objectStore(STORE_NAME).clear();
+    transaction.oncomplete = () => { db.close(); resolve(); };
+    transaction.onerror = () => { db.close(); reject(transaction.error); };
+  });
+}
+
 export async function exportRecords() {
   const records = await loadRecords();
   const text = records.map(({ id: _id, ...record }) => JSON.stringify(record)).join("\n") + "\n";
