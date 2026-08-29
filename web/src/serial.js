@@ -26,14 +26,23 @@ export async function requestWebUsbPort(usb = navigator.usb, serial = webUsbSeri
   return port;
 }
 
+export function formatLocation(latitude, longitude) {
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw new RangeError("Location is outside the valid latitude/longitude range.");
+  }
+  return `${latitude} ${longitude}\n`;
+}
+
 export class SerialConnection extends EventTarget {
-  constructor(baudRate = 115200) {
+  constructor(baudRate = 115200, mode = transportSupport().mode) {
     super();
     this.baudRate = baudRate;
-    this.mode = transportSupport().mode;
+    this.mode = mode;
     this.port = null;
     this.reader = null;
     this.reading = false;
+    this.writeQueue = Promise.resolve();
   }
 
   async connect() {
@@ -70,7 +79,22 @@ export class SerialConnection extends EventTarget {
   async disconnect() {
     this.reading = false;
     if (this.reader) await this.reader.cancel().catch(() => {});
+    await this.writeQueue.catch(() => {});
     if (this.port) await this.port.close().catch(() => {});
     this.port = null;
+  }
+
+  write(text) {
+    const operation = this.writeQueue.catch(() => {}).then(async () => {
+      if (!this.reading || !this.port?.writable) throw new Error("Serial connection is not writable.");
+      const writer = this.port.writable.getWriter();
+      try {
+        await writer.write(new TextEncoder().encode(text));
+      } finally {
+        writer.releaseLock();
+      }
+    });
+    this.writeQueue = operation;
+    return operation;
   }
 }

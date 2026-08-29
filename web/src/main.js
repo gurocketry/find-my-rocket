@@ -3,10 +3,11 @@ import "./styles.css";
 import L from "leaflet";
 import {
   FlightTrack, MeshNetwork, PacketFramer, STAGES, bearingDegrees, distanceMetres,
-  parseHealthLine, parsePackets,
+  decodeFaults, parseHealthLine, parsePackets,
 } from "./telemetry.js";
-import { SerialConnection, transportSupport } from "./serial.js";
+import { SerialConnection, formatLocation, transportSupport } from "./serial.js";
 import { clearRecords, exportRawLog, loadRecords, storeRecord } from "./storage.js";
+import { AudioCues, enteredLanded } from "./audio.js";
 
 const elements = Object.fromEntries([
   "connect", "baud", "locate", "install", "install-banner", "connection-pill",
@@ -17,6 +18,7 @@ const elements = Object.fromEntries([
   "compass-bearing", "compass-heading", "compass-fix",
   "mesh-state", "mesh-node-count", "mesh-rx", "mesh-accepted", "mesh-duplicates",
   "mesh-rssi", "mesh-snr", "mesh-relayed", "mesh-queue", "mesh-nodes-body",
+  "fault-state", "fault-count", "fault-list", "fault-raw",
 ].map((id) => [id, document.getElementById(id)]));
 
 const map = L.map("map", { zoomControl: false, attributionControl: true }).setView([55.8708, -4.2898], 14);
@@ -35,6 +37,7 @@ const accuracyCircle = L.circle([0, 0], { radius: 1, color: "#62f5a5", fillOpaci
 const flownLine = L.polyline([], { color: "#ff5576", weight: 4 }).addTo(map);
 const predictionLine = L.polyline([], { color: "#42d9ff", weight: 3, dashArray: "9 10" }).addTo(map);
 const groundStationMarkers = new Map();
+const audioCues = new AudioCues();
 
 let track = new FlightTrack();
 let mesh = new MeshNetwork();
@@ -144,11 +147,33 @@ function render(point) {
   elements["flight-stage"].textContent = STAGES.get(point.stage) || "UNKNOWN";
   elements["flight-stage"].className = `stage stage-${point.stage}`;
   elements.range.textContent = userPosition ? (distanceMetres(userPosition, point) / 1000).toFixed(2) : "—";
+  renderFaults(point);
   renderCompass();
   if (!hasCentered) {
     map.setView([point.lat, point.lon], 16);
     hasCentered = true;
   }
+}
+
+function renderFaults(point = null) {
+  if (!point) {
+    elements["fault-state"].textContent = "WAITING";
+    elements["fault-state"].className = "fault-state fault-waiting";
+    elements["fault-count"].textContent = "—";
+    elements["fault-raw"].textContent = "—";
+    elements["fault-list"].textContent = "Waiting for flight-computer telemetry…";
+    return;
+  }
+
+  const statuses = decodeFaults(point.flags, { legacy: point.faultEncoding === "uint32" });
+  const faults = statuses.filter((status) => status.fault);
+  elements["fault-count"].textContent = String(faults.length);
+  elements["fault-raw"].textContent = point.flags;
+  elements["fault-state"].textContent = faults.length ? "FAULT" : "NOMINAL";
+  elements["fault-state"].className = `fault-state ${faults.length ? "fault-active" : "fault-nominal"}`;
+  elements["fault-list"].textContent = faults.length
+    ? faults.map((fault) => `${fault.name}: ${fault.status}`).join("\n")
+    : "No current faults.";
 }
 
 function updateGroundStationMarker(packet) {
@@ -244,6 +269,7 @@ function resetTelemetryState() {
   elements["packet-count"].textContent = "0";
   elements["flight-stage"].textContent = "WAITING FOR TELEMETRY";
   elements["flight-stage"].className = "stage";
+  renderFaults();
   elements["compass-distance"].textContent = "—";
   elements["compass-bearing"].textContent = "—";
   renderCompass();
@@ -252,6 +278,7 @@ function resetTelemetryState() {
 
 async function accept(packet) {
   const receivedAt = new Date();
+  audioCues.meow();
   const observation = mesh.observe(packet, receivedAt);
   setLastPacket(receivedAt);
   renderMesh();
@@ -270,7 +297,9 @@ async function accept(packet) {
     return;
   }
   if (packet.sender !== null && trackedFlightNode === null) trackedFlightNode = packet.sender;
+  const previousStage = track.points.at(-1)?.stage;
   const point = track.add(packet, receivedAt);
+  if (enteredLanded(previousStage, point.stage)) audioCues.boing();
   render(point);
   await storeRecord({ record: "telemetry", transport: connection?.mode, point }).catch((error) => {
     elements["status-detail"].textContent = `Telemetry active; local log failed: ${error.message}`;
@@ -309,6 +338,7 @@ function startLocationWatch() {
   locationWatchId = navigator.geolocation.watchPosition((position) => {
     userPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
     userAccuracy = position.coords.accuracy;
+    shareUserPosition();
     userMarker.setLatLng(userPosition).addTo(map);
     accuracyCircle.setLatLng(userPosition).setRadius(userAccuracy).addTo(map);
     elements.locate.textContent = `GPS ±${Math.round(userAccuracy)} m`;
@@ -322,6 +352,13 @@ function startLocationWatch() {
     elements.locate.textContent = "MY LOCATION";
     elements["compass-locate"].textContent = "USE MY LOCATION";
   }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
+}
+
+function shareUserPosition() {
+  if (!userPosition || !connection?.reading) return;
+  connection.write(formatLocation(userPosition.lat, userPosition.lon)).catch((error) => {
+    elements["status-detail"].textContent = `Location available, but serial sharing failed: ${error.message}`;
+  });
 }
 
 function orientationChanged(event) {
@@ -360,6 +397,7 @@ elements.connect.addEventListener("click", async () => {
     return;
   }
   try {
+    await audioCues.enable();
     connection = new SerialConnection(Number(elements.baud.value));
     connection.addEventListener("data", (event) => processText(event.detail));
     connection.addEventListener("recoverable-error", (event) => {
@@ -373,6 +411,7 @@ elements.connect.addEventListener("click", async () => {
     await connection.connect();
     elements.baud.disabled = true;
     setConnection(true, connection.mode.toUpperCase());
+    shareUserPosition();
   } catch (error) {
     setConnection(false, error.name === "NotFoundError" ? "No board selected." : `Connection failed: ${error.message}`);
   }
@@ -455,4 +494,5 @@ loadRecords().then((records) => {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
 
 renderMesh();
+renderFaults();
 setInterval(renderMesh, 1000);

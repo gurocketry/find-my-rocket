@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  FlightTrack, MeshNetwork, PacketFramer, bearingDegrees, parseHealthLine, parsePackets,
+  FlightTrack, MeshNetwork, PacketFramer, bearingDegrees, decodeFaults, parseHealthLine, parsePackets,
 } from "../src/telemetry.js";
 
 test("parses Astra telemetry with and without timestamps", () => {
@@ -49,6 +49,30 @@ test("keeps compatibility with the preceding sender(sequence) packet format", ()
     parsePackets("0(42): 2, 10000000, 55.870758, -4.286921, 120.50").packets[0].kind,
     "flight",
   );
+});
+
+test("decodes current Astra packed device faults in registry order", () => {
+  const statuses = decodeFaults("11321142");
+  assert.deepEqual(statuses.map(({ name, status }) => [name, status]), [
+    ["LED", "ready"],
+    ["Radio", "ready"],
+    ["Flash storage", "undetected"],
+    ["Accelerometer", "power failure"],
+    ["Barometer", "ready"],
+    ["GPS", "ready"],
+    ["Gyroscope", "device ID failure"],
+    ["Magnetometer", "configuration error"],
+  ]);
+  assert.deepEqual(statuses.filter(({ fault }) => fault).map(({ name }) => name), [
+    "Flash storage", "Accelerometer", "Gyroscope", "Magnetometer",
+  ]);
+});
+
+test("decodes legacy uint32 fault text from least-significant nibble first", () => {
+  const statuses = decodeFaults("43211111", { legacy: true });
+  assert.equal(statuses[0].status, "ready");
+  assert.equal(statuses[5].status, "no fix");
+  assert.equal(statuses[7].status, "configuration error");
 });
 
 test("parses ground-station network health output", () => {

@@ -26,6 +26,10 @@ matching the current ground-station firmware.
 
 The connection panel also offers `9600` for legacy receivers.
 
+After the user enables phone location, each new fix is sent to the connected
+ground station as `latitude longitude\n`. If location was enabled before the
+board connected, the latest fix is sent immediately after connection.
+
 The current serial format identifies every mesh source and sequence number. Flight
 packets look like `[0-42] [flight] state, flags, latitude, longitude, altitude`;
 ground station pings look like `[3-7] latitude, longitude, altitude`. The Mesh tab combines

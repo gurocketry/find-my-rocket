@@ -10,6 +10,35 @@ export const STAGES = new Map([
   [255, "UNKNOWN"],
 ]);
 
+// Device order and status values mirror SustainerFaultRegistry in Astra and
+// the status enums in platform-gur. Each device occupies one four-bit nibble.
+export const ASTRA_FAULT_DEVICES = [
+  { name: "LED", statuses: ["uninitialized", "ready", "invalid colour", "invalid configuration", "invalid operation"] },
+  { name: "Radio", statuses: ["uninitialized", "ready", "undetected", "transmit error", "invalid argument", "invalid configuration", "channel busy"] },
+  { name: "Flash storage", statuses: ["uninitialized", "ready", "undetected", "I/O error", "invalid argument", "invalid configuration"] },
+  { name: "Accelerometer", statuses: ["uninitialized", "ready", "device ID failure", "power failure", "activation failure", "self-test failure", "power-up failure", "mode-set failure", "range-set failure", "output-rate failure", "configuration failure", "fatal error", "read error"] },
+  { name: "Barometer", statuses: ["uninitialized", "ready", "undetected", "read error", "filter error", "conversion timeout", "invalid configuration"] },
+  { name: "GPS", statuses: ["uninitialized", "ready", "no fix", "read error", "invalid configuration"] },
+  { name: "Gyroscope", statuses: ["uninitialized", "ready", "device ID failure", "power failure", "activation failure", "self-test failure", "configuration failure", "fatal error", "read error"] },
+  { name: "Magnetometer", statuses: ["uninitialized", "ready", "undetected", "read error", "configuration error"] },
+];
+
+export function decodeFaults(flags, { legacy = false } = {}) {
+  if (!/^[0-9a-f]+$/i.test(String(flags))) return [];
+  const encoded = legacy
+    ? String(flags).padStart(ASTRA_FAULT_DEVICES.length, "0").slice(-ASTRA_FAULT_DEVICES.length)
+    : String(flags).padEnd(ASTRA_FAULT_DEVICES.length, "0").slice(0, ASTRA_FAULT_DEVICES.length);
+  // Serialized registry bytes are printed most-significant nibble first, while
+  // Astra packs the first device into each byte's least-significant nibble.
+  const hex = legacy
+    ? encoded.split("").reverse()
+    : encoded.match(/../g).flatMap((byte) => [byte[1], byte[0]]);
+  return ASTRA_FAULT_DEVICES.map((device, index) => {
+    const code = Number.parseInt(hex[index], 16);
+    return { name: device.name, code, status: device.statuses[code] || `unknown status ${code}`, fault: code !== 1 };
+  });
+}
+
 const PACKET_SOURCE = String.raw`(?:(\d{2}:\d{2}:\d{2}\.\d{3})\s*>\s*)?((?:[0-4]|255))\s*,\s*([0-9a-fA-F]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*(-?\d+)\s*,\s*(\d+?)`;
 const NEXT_PACKET = String.raw`(?=\s*(?:(?:\d{2}:\d{2}:\d{2}\.\d{3}\s*>\s*)?(?:[0-4]|255)\s*,\s*[0-9a-fA-F]+\s*,\s*[-\d.]+\s*,|$))`;
 const MESH_PACKET_RE = /^(?:(\d{2}:\d{2}:\d{2}\.\d{3})\s*>\s*)?(?:(\d{1,3})\((\d{1,5})\):|\[(\d{1,3})-(\d{1,5})\])\s*(\[flight\]\s*)?(.+?)\s*$/;
@@ -51,7 +80,7 @@ export function parsePackets(raw) {
       packet = {
         kind: "flight", sender, sequence, timestamp: timestamp || null,
         stage: Number(stage), flags, lat: Number(lat), lon: Number(lon), alt: Number(alt),
-        rssi: null, sats: null, raw: meshMatch[0],
+        rssi: null, sats: null, faultEncoding: "registry", raw: meshMatch[0],
       };
     }
 
@@ -87,6 +116,7 @@ export function parsePackets(raw) {
       alt: Number(alt),
       rssi: Number(rssi),
       sats: Number(sats),
+      faultEncoding: "uint32",
       raw: match[0],
     };
 
