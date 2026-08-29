@@ -78,7 +78,18 @@ h2 { font-size: clamp(25px, 6vw, 38px); }
 .compass-centre { position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; transform: translate(-50%, -50%); border: 6px solid #fff; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 5px #ff557633; }
 .compass-readout { max-width: 580px; margin: auto; padding: 13px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .compass-readout strong { display: block; overflow-wrap: anywhere; font: 700 15px/1.3 ui-monospace, monospace; }
-.compass-actions { max-width: 580px; margin: 12px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.compass-actions { max-width: 580px; margin: 12px auto 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+.manual-location-dialog { width: min(520px, calc(100% - 24px)); padding: 22px; color: var(--ink); }
+.manual-location-dialog::backdrop { background: #02070cdd; backdrop-filter: blur(3px); }
+.manual-location-dialog h2 { margin-top: 3px; font-size: 28px; }
+.manual-location-copy { margin: 8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.coordinate-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.coordinate-fields label { color: var(--muted); font: 800 9px ui-monospace, monospace; letter-spacing: .08em; }
+.coordinate-fields input { width: 100%; min-height: 46px; margin-top: 6px; padding: 10px; border: 1px solid #36546a; border-radius: 8px; color: var(--ink); background: #091827; font: 700 15px ui-monospace, monospace; }
+.coordinate-fields input:focus { border-color: var(--cyan); outline: 1px solid var(--cyan); }
+.manual-location-error { min-height: 18px; margin: 8px 0; color: var(--red); font-size: 11px; }
+.manual-location-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
 .log-view { display: flex; flex-direction: column; padding: 18px; background: #050b12; }
 .log-header { flex: 0 0 auto; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
@@ -140,13 +151,14 @@ h2 { font-size: clamp(25px, 6vw, 38px); }
   .metric small { display: none; }
   .actions { left: 8px; right: 8px; bottom: 8px; max-width: none; padding: 10px; display: block; }
   .status-copy { min-width: 0; max-width: none; margin-bottom: 8px; }
-  .button-row { display: grid; grid-template-columns: 1.25fr .8fr 1fr; }
+  .button-row { display: grid; grid-template-columns: 1.25fr .8fr 1fr 1fr; }
   .button-row button { padding: 8px 5px; font-size: 9px; }
   .baud { gap: 3px; font-size: 7px; }
   .baud select { min-width: 0; width: 100%; padding: 5px; font-size: 9px; }
   .leaflet-bottom { bottom: 118px; }
   .leaflet-control-attribution { max-width: 70%; white-space: normal; }
   .compass-readout { grid-template-columns: 1fr 1fr; }
+  .compass-actions { grid-template-columns: 1fr; }
   .mesh-summary { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -160,10 +172,12 @@ h2 { font-size: clamp(25px, 6vw, 38px); }
   .pill { font-size: 8px; }
   .telemetry { grid-template-columns: repeat(3, 1fr); }
   .metric:nth-child(n+4) { padding-top: 5px; border-top: 1px solid #1c364a; }
+  .button-row { grid-template-columns: 1fr 1fr; }
   .compass-view { padding-top: 18px; }
   .compass-dial { width: min(67vw, 270px); }
   .compass-arrow span { border-right-width: 19px; border-bottom-width: 82px; border-left-width: 19px; }
   .compass-readout strong { font-size: 12px; }
+  .coordinate-fields { grid-template-columns: 1fr; }
   .log-view { padding: 12px 10px; }
   .log-header h2 { font-size: 24px; }
   .log-actions button { padding: 9px 10px; font-size: 9px; }

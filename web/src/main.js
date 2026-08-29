@@ -11,6 +11,8 @@ import { AudioCues, enteredLanded } from "./audio.js";
 
 const elements = Object.fromEntries([
   "connect", "baud", "locate", "install", "install-banner", "connection-pill",
+  "manual-location", "compass-manual-location", "manual-location-dialog", "manual-location-form",
+  "manual-latitude", "manual-longitude", "manual-location-error", "cancel-manual-location",
   "last-packet-time",
   "flight-stage", "status-detail", "altitude", "vertical-speed", "range", "signal",
   "satellites", "packet-count", "error-count", "raw-count", "raw-log", "save-log", "clear-log",
@@ -47,6 +49,7 @@ let rawStoreQueue = Promise.resolve();
 let connection = null;
 let userPosition = null;
 let userAccuracy = null;
+let userPositionSource = null;
 let phoneHeading = null;
 let locationWatchId = null;
 let orientationListening = false;
@@ -131,7 +134,9 @@ function renderCompass() {
   const relativeBearing = (bearing - phoneHeading + 360) % 360;
   elements["compass-arrow"].style.transform = `rotate(${relativeBearing}deg)`;
   elements["compass-arrow"].classList.add("ready");
-  elements["compass-status"].textContent = `Follow the arrow · phone GPS ±${Math.round(userAccuracy || 0)} m`;
+  elements["compass-status"].textContent = userPositionSource === "manual"
+    ? "Follow the arrow · using manually entered coordinates"
+    : `Follow the arrow · phone GPS ±${Math.round(userAccuracy || 0)} m`;
 }
 
 function render(point) {
@@ -329,7 +334,8 @@ async function processText(text) {
 function startLocationWatch() {
   if (!navigator.geolocation) {
     elements["status-detail"].textContent = "Location is not available in this browser.";
-    elements["compass-status"].textContent = "Location is not available in this browser.";
+    elements["compass-status"].textContent = "Location is not available in this browser. Enter coordinates manually.";
+    openManualLocation();
     return;
   }
   if (locationWatchId !== null) return;
@@ -338,6 +344,7 @@ function startLocationWatch() {
   locationWatchId = navigator.geolocation.watchPosition((position) => {
     userPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
     userAccuracy = position.coords.accuracy;
+    userPositionSource = "gps";
     shareUserPosition();
     userMarker.setLatLng(userPosition).addTo(map);
     accuracyCircle.setLatLng(userPosition).setRadius(userAccuracy).addTo(map);
@@ -348,10 +355,49 @@ function startLocationWatch() {
   }, (error) => {
     locationWatchId = null;
     elements["status-detail"].textContent = `Device location unavailable: ${error.message}`;
-    elements["compass-status"].textContent = `Device location unavailable: ${error.message}`;
+    elements["compass-status"].textContent = `Device location unavailable: ${error.message}. Enter coordinates manually.`;
     elements.locate.textContent = "MY LOCATION";
     elements["compass-locate"].textContent = "USE MY LOCATION";
+    openManualLocation();
   }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 });
+}
+
+function openManualLocation() {
+  if (userPosition) {
+    elements["manual-latitude"].value = userPosition.lat;
+    elements["manual-longitude"].value = userPosition.lon;
+  }
+  elements["manual-location-error"].textContent = "";
+  elements["manual-location-dialog"].showModal();
+}
+
+function useManualLocation(event) {
+  event.preventDefault();
+  const lat = Number(elements["manual-latitude"].value);
+  const lon = Number(elements["manual-longitude"].value);
+  try {
+    formatLocation(lat, lon);
+  } catch (error) {
+    elements["manual-location-error"].textContent = error.message;
+    return;
+  }
+
+  if (locationWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+  }
+  userPosition = { lat, lon };
+  userAccuracy = null;
+  userPositionSource = "manual";
+  userMarker.setLatLng(userPosition).addTo(map);
+  accuracyCircle.remove();
+  elements.locate.textContent = "USE DEVICE GPS";
+  elements["compass-locate"].textContent = "USE DEVICE GPS";
+  elements["status-detail"].textContent = "Using manual coordinates; sharing them with the board every 10 seconds.";
+  elements["manual-location-dialog"].close();
+  shareUserPosition();
+  if (track.points.length) render(track.points.at(-1));
+  else renderCompass();
 }
 
 function shareUserPosition() {
@@ -419,6 +465,10 @@ elements.connect.addEventListener("click", async () => {
 
 elements.locate.addEventListener("click", startLocationWatch);
 elements["compass-locate"].addEventListener("click", startLocationWatch);
+elements["manual-location"].addEventListener("click", openManualLocation);
+elements["compass-manual-location"].addEventListener("click", openManualLocation);
+elements["manual-location-form"].addEventListener("submit", useManualLocation);
+elements["cancel-manual-location"].addEventListener("click", () => elements["manual-location-dialog"].close());
 elements["enable-compass"].addEventListener("click", enableCompass);
 elements["save-log"].addEventListener("click", async () => {
   await rawStoreQueue;
@@ -496,3 +546,4 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
 renderMesh();
 renderFaults();
 setInterval(renderMesh, 1000);
+setInterval(shareUserPosition, 10000);

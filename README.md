@@ -13,7 +13,10 @@ Open <http://localhost:8080>. The demo waits on the pad, launches, flies a compl
 On phones, tablets, and computers with location hardware, the map requests the
 browser's location and shows the ground station as a green `YOU` marker with an
 accuracy circle and live distance to the rocket. Browser geolocation requires
-permission and a secure context (HTTPS, or `localhost` during development).
+permission. If device location is unavailable, use **Enter Coords** on the Map
+or Compass screen. The manual latitude and longitude are sent to the connected
+board immediately and repeated every 10 seconds. Browser location and USB access
+require a secure context (HTTPS, or `localhost` during development).
 
 For streamed 3D terrain, paste your token into the already-created `.env` file and run normally:
 

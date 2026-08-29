@@ -44,6 +44,7 @@
             <button id="connect" class="primary">CONNECT BOARD</button>
             <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="115200">115200</option><option value="9600">9600</option></select></label>
             <button id="locate">MY LOCATION</button>
+            <button id="manual-location">ENTER COORDS</button>
           </div>
         </section>
       </section>
@@ -67,6 +68,7 @@
         </div>
         <div class="compass-actions">
           <button id="compass-locate" class="primary">USE MY LOCATION</button>
+          <button id="compass-manual-location">ENTER COORDS</button>
           <button id="enable-compass">ENABLE COMPASS</button>
         </div>
       </section>
@@ -142,6 +144,23 @@
         <span>Install for offline field use</span>
         <button id="install">INSTALL APP</button>
       </div>
+
+      <dialog id="manual-location-dialog" class="manual-location-dialog panel">
+        <form id="manual-location-form" method="dialog">
+          <p class="eyebrow">LOCATION FALLBACK</p>
+          <h2>Enter your coordinates</h2>
+          <p class="manual-location-copy">These coordinates will be sent to the connected board now and every 10 seconds.</p>
+          <div class="coordinate-fields">
+            <label>LATITUDE<input id="manual-latitude" name="latitude" type="number" min="-90" max="90" step="any" inputmode="decimal" placeholder="55.870758" required /></label>
+            <label>LONGITUDE<input id="manual-longitude" name="longitude" type="number" min="-180" max="180" step="any" inputmode="decimal" placeholder="-4.286921" required /></label>
+          </div>
+          <p id="manual-location-error" class="manual-location-error" role="alert"></p>
+          <div class="manual-location-actions">
+            <button id="cancel-manual-location" type="button">CANCEL</button>
+            <button class="primary" type="submit">USE COORDINATES</button>
+          </div>
+        </form>
+      </dialog>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>
