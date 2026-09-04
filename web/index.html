@@ -13,12 +13,10 @@
     <main id="app">
       <header class="app-header">
         <div>
-          <p class="eyebrow">GUR · FIELD OPERATIONS</p>
-          <h1>Rocket Tracker</h1>
+          <h1>Rocket tracker</h1>
         </div>
         <div class="header-status">
           <div class="last-packet">
-            <span>LAST PACKET</span>
             <time id="last-packet-time">—</time>
           </div>
           <div id="connection-pill" class="pill offline"><span></span>OFFLINE</div>
@@ -35,23 +33,31 @@
           <div class="metric"><span>SATELLITES</span><strong id="satellites">—</strong></div>
           <div class="metric"><span>PACKETS</span><strong id="packet-count">0</strong></div>
         </aside>
-        <section class="actions panel">
-          <div class="status-copy">
-            <span id="flight-stage" class="stage">WAITING FOR BOARD</span>
+        <div class="map-stage panel"><span id="flight-stage" class="stage">WAITING FOR BOARD</span></div>
+      </section>
+
+      <section id="setup-view" class="tab-view setup-view" role="tabpanel" aria-labelledby="setup-tab" hidden>
+        <div class="setup-card panel">
+          <div class="setup-status">
             <span id="status-detail">Connect the Astra ground station over USB.</span>
           </div>
-          <div class="button-row">
+          <div class="setup-controls">
             <button id="connect" class="primary">CONNECT BOARD</button>
-            <label class="baud">BAUD<select id="baud" aria-label="Serial baud rate"><option value="115200">115200</option><option value="9600">9600</option></select></label>
-            <button id="locate">MY LOCATION</button>
-            <button id="manual-location">ENTER COORDS</button>
+            <label class="baud"><span>Baud</span><select id="baud" aria-label="Serial baud rate"><option value="115200">115200</option><option value="9600">9600</option></select></label>
           </div>
-        </section>
+          <div class="setup-divider"></div>
+          <div class="setup-location">
+            <strong>Location</strong>
+            <div class="button-row">
+              <button id="locate">USE DEVICE GPS</button>
+              <button id="manual-location">ENTER COORDINATES</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="compass-view" class="tab-view compass-view" role="tabpanel" aria-labelledby="compass-tab" hidden>
         <div class="compass-copy">
-          <p class="eyebrow">OFFLINE RECOVERY</p>
           <h2>Direction to rocket</h2>
           <p id="compass-status">Waiting for your location and rocket telemetry.</p>
         </div>
@@ -76,7 +82,6 @@
       <section id="log-view" class="tab-view log-view" role="tabpanel" aria-labelledby="log-tab" hidden>
         <div class="log-header">
           <div>
-            <p class="eyebrow">ASTRA SERIAL STREAM</p>
             <h2>Raw log</h2>
             <p><span id="raw-count">0 lines</span> · <span id="error-count">0 rejected</span></p>
           </div>
@@ -91,9 +96,7 @@
       <section id="mesh-view" class="tab-view mesh-view" role="tabpanel" aria-labelledby="mesh-tab" hidden>
         <div class="mesh-header">
           <div>
-            <p class="eyebrow">GROUND-STATION RADIO</p>
             <h2>Mesh health</h2>
-            <p>Live packet delivery, relay health, and per-node activity.</p>
           </div>
           <strong id="mesh-state" class="mesh-state mesh-never">NEVER</strong>
         </div>
@@ -119,9 +122,7 @@
       <section id="faults-view" class="tab-view faults-view" role="tabpanel" aria-labelledby="faults-tab" hidden>
         <div class="faults-header">
           <div>
-            <p class="eyebrow">FLIGHT-COMPUTER STATUS</p>
             <h2>Current faults</h2>
-            <p>Decoded from Astra's packed device-status field.</p>
           </div>
           <strong id="fault-state" class="fault-state fault-waiting">WAITING</strong>
         </div>
@@ -138,6 +139,7 @@
         <button id="mesh-tab" class="tab" role="tab" aria-selected="false" aria-controls="mesh-view" data-view="mesh-view"><span>◌</span>MESH</button>
         <button id="faults-tab" class="tab" role="tab" aria-selected="false" aria-controls="faults-view" data-view="faults-view"><span>!</span>FAULTS</button>
         <button id="log-tab" class="tab" role="tab" aria-selected="false" aria-controls="log-view" data-view="log-view"><span>≡</span>LOG</button>
+        <button id="setup-tab" class="tab" role="tab" aria-selected="false" aria-controls="setup-view" data-view="setup-view"><span>⚙</span>SETUP</button>
       </nav>
 
       <div id="install-banner" class="install panel" hidden>
@@ -147,7 +149,6 @@
 
       <dialog id="manual-location-dialog" class="manual-location-dialog panel">
         <form id="manual-location-form" method="dialog">
-          <p class="eyebrow">LOCATION FALLBACK</p>
           <h2>Enter your coordinates</h2>
           <p class="manual-location-copy">These coordinates will be sent to the connected board now and every 10 seconds.</p>
           <div class="coordinate-fields">

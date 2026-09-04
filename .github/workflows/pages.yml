@@ -2,7 +2,7 @@ name: Deploy Web Serial PWA to GitHub Pages
 
 on:
   push:
-    branches: [web-serial-pwa]
+    branches: [main, master, web-serial-pwa]
   workflow_dispatch:
 
 permissions:

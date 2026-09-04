@@ -3,7 +3,7 @@
 This version runs the GPS tracker entirely in the browser. It reads Astra
 telemetry over USB, parses and recovers packets, stores the flight log in
 IndexedDB, shows the rocket and phone location on the map, predicts the current
-trajectory, exports JSONL, and remains installable/offline as a PWA.
+trajectory, and remains installable/offline as a PWA.
 
 ## Development
 
@@ -24,7 +24,7 @@ both the Astra firmware identity and boards using the STM32 CDC identity
 `0483:5740` to connect without an app update. The default baud is `115200`,
 matching the current ground-station firmware.
 
-The connection panel also offers `9600` for legacy receivers.
+The SETUP view also offers `9600` for legacy receivers.
 
 After the user enables phone location, each new fix is sent to the connected
 ground station as `latitude longitude\n`. If location was enabled before the
@@ -50,7 +50,7 @@ Close any native serial app before connecting because Android allows only one
 application to own the USB interface. Open the installed PWA from Chrome rather
 than an embedded browser inside another app.
 
-The first connection must be initiated with the **Connect board** button so the
+The first connection must be initiated with the **Connect board** button in SETUP so the
 browser can show its device permission picker. iOS/Safari and Firefox do not
 provide the required USB APIs.
 
