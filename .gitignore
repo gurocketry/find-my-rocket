@@ -3,5 +3,5 @@ __pycache__/
 *.py[cod]
 .env
 *.jsonl
-web/node_modules/
-web/dist/
+node_modules/
+dist/
