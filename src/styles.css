@@ -276,3 +276,33 @@ button.danger { color:var(--red); background:transparent; border-color:var(--red
 .connect-dialog .setup-card h2 { margin:0; font-size:16px; }
 .connect-dialog .setup-card p { margin:5px 0 0; font-size:12px; }
 .connect-dialog .setup-controls, .connect-dialog .setup-card>.button-row { margin-top:12px; }
+/* Compact, centered status and page navigation. */
+:root { --toolbar:50px; --tabs:54px; }
+.status-toolbar { justify-content:center; gap:clamp(8px,2vw,22px); padding:4px 10px calc(4px + env(safe-area-inset-top)); }
+.toolbar-item { text-align:center; }
+.toolbar-item span, .toolbar-stage span { font-size:8px; }
+.toolbar-item strong { margin-top:2px; font-size:12px; }
+.toolbar-stage { margin-left:0; }
+.rocket-stage { width:36px; height:36px; }
+.ground-station-button { flex-basis:36px; width:36px; height:36px; min-height:36px; padding:3px; }
+.ground-station-button svg { width:27px; height:27px; }
+.ground-station-button .station-status { width:16px; height:16px; font-size:12px; }
+.tab-bar { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; gap:2px; padding:3px max(8px,env(safe-area-inset-left)) env(safe-area-inset-bottom); border-top:1px solid var(--line); }
+.tab-bar button { width:100%; height:47px; min-height:47px; padding:2px 4px; justify-content:center; gap:1px; border-radius:0; font-size:9px; }
+.tab-bar button span { font-size:17px; }
+.tab-bar button.active { color:var(--accent); background:transparent; box-shadow:inset 0 2px 0 var(--accent); }
+@media (min-width:1000px) { .tab-bar { display:none; } }
+@media (max-width:360px) { .toolbar-stage span { display:none; } }
+
+/* Recovery controls remain available without occupying a permanent row. */
+.compass-view { position:relative; }
+.compass-options-toggle { position:absolute; z-index:810; right:12px; bottom:10px; display:grid; place-items:center; width:38px; height:38px; min-height:38px; padding:7px; border:1px solid var(--line); background:#292926; }
+.compass-options-toggle svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; }
+.compass-options-toggle svg circle { fill:#292926; }
+.compass-actions { position:absolute; z-index:820; right:12px; bottom:55px; width:min(240px,calc(100% - 24px)); max-width:none; margin:0; padding:8px; display:grid; grid-template-columns:1fr; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:4px; box-shadow:5px 5px 0 #050505; }
+.compass-actions button { width:100%; min-height:36px; }
+@media (max-width:999px) {
+  .telemetry-view .compass-options-toggle { right:12px; bottom:12px; }
+  .telemetry-view .compass-actions { inset:auto 8px 56px auto; width:min(230px,calc(100% - 16px)); display:grid; grid-template-columns:1fr; gap:6px; }
+  .telemetry-view .compass-actions button { min-height:36px; font-size:11px; }
+}
