@@ -24,6 +24,9 @@ export function StatusToolbar({ onConnect }) {
     <div className="toolbar-item"><span>LAST PACKET</span><strong className={fresh ? "good-text" : ""}>{age === null ? "—" : `${age}s ago`}</strong></div>
     <div className="toolbar-item"><span>ROCKET GPS</span><strong className="fix-value"><i className={`fix-light ${fix && fresh ? "on" : ""}`} />{!point ? "WAITING" : fix && fresh ? "FIX" : "NO FIX"}</strong></div>
     <div className="toolbar-stage"><RocketStage stage={point?.stage} /><span>{STAGES.get(point?.stage) || "WAITING"}</span></div>
-    {!status.connected && <button className="toolbar-connect" onClick={onConnect}>Connect device</button>}
+    <button className={`ground-station-button ${status.connected ? "connected" : "disconnected"}`} onClick={onConnect} aria-label={`Ground station ${status.connected ? "connected" : "disconnected"}. Open connection settings`} title={`Ground station ${status.connected ? "connected" : "disconnected"}`}>
+      <svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 16v15M10 31h16M18 16l-5 15m5-15 5 15" /><circle cx="18" cy="13" r="2" /><path d="M12 7a9 9 0 0 0 0 12m12-12a9 9 0 0 1 0 12M8 3a15 15 0 0 0 0 20m20-20a15 15 0 0 1 0 20" /></svg>
+      <span className="station-status" aria-hidden="true">{status.connected ? "✓" : "×"}</span>
+    </button>
   </div>;
 }

@@ -191,3 +191,80 @@ h1, h2 { letter-spacing: -.025em; }
 @media (max-width:360px) {
   .telemetry-view .compass-dial { top:-66px; }
 }
+
+/* GUR night palette, based on the inverted society mark. */
+:root {
+  color-scheme:dark;
+  --ink:#f2f1ec;
+  --muted:#aaa9a2;
+  --panel:#1b1b1a;
+  --line:#484842;
+  --red:#f07870;
+  --cyan:#f2f1ec;
+  --green:#6ec68c;
+  --orange:#f6c722;
+  --paper:#101010;
+  --surface:#1a1a19;
+  color:var(--ink);
+  background:var(--paper);
+}
+body, .page, .telemetry-view { background:var(--paper); }
+button { color:var(--ink); background:#242423; border-color:#686861; }
+button:hover { background:#343431; border-color:#aaa9a2; }
+button.primary, .toolbar-connect { color:#171713; background:var(--accent); border-color:var(--accent); }
+button.primary:hover, .toolbar-connect:hover { color:#171713; background:#e8b70d; border-color:#e8b70d; }
+button.danger { color:var(--red); background:transparent; border-color:var(--red); }
+.status-toolbar { background:#1b1b1a; border-color:#55554e; }
+.toolbar-item strong, .toolbar-stage span { color:var(--ink); }
+.toolbar-item .good-text { color:var(--green); }
+.rocket-stage path, .rocket-stage circle { fill:var(--ink); stroke:var(--ink); }
+.rocket-stage .rocket-rail path, .rocket-stage .rocket-chute { stroke:var(--ink); }
+.rocket-stage .rocket-flame { fill:var(--accent); stroke:var(--orange); }
+.ground-station-button { position:relative; flex:0 0 45px; width:45px; height:45px; min-height:45px; padding:5px; display:grid; place-items:center; border:1px solid var(--line); border-radius:4px; background:#262625; }
+.ground-station-button:hover { background:#33332f; }
+.ground-station-button svg { width:31px; height:31px; fill:none; stroke:var(--ink); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.ground-station-button .station-status { position:absolute; right:-4px; bottom:-4px; display:grid; place-items:center; width:18px; height:18px; border:2px solid #1b1b1a; border-radius:50%; color:#fff; background:var(--red); font-size:14px; font-weight:900; line-height:1; }
+.ground-station-button.connected .station-status { color:#101810; background:var(--green); font-size:12px; }
+.tab-bar { background:#1b1b1a; border-color:#55554e; }
+.tab-bar button { color:var(--muted); }
+.tab-bar button.active { color:#151512; background:var(--accent); }
+.glass { background:var(--surface); border-color:var(--line); }
+.compass-dial, .telemetry-view .compass-dial { background:#1a1a19; border-color:#b4b3aa; }
+.compass-dial::before { border-color:#66665e; }
+.compass-dial>span { color:#c7c6bd; }
+.compass-dial .north { color:var(--accent); }
+.compass-centre { border-color:var(--ink); background:var(--accent); }
+.recovery-readout { background:var(--surface); }
+.telemetry-view .compass-view { background:#1a1a19; border-color:#55554e; }
+.summary-grid .metric, .technical dl div { color:var(--ink); background:#222220; border-color:var(--line); }
+.raw-log { color:#e5e4dc; background:#0b0b0b; border-color:var(--line); }
+.setup-controls select, .field-grid input { color:var(--ink); background:#20201e; border-color:#686861; }
+.step-icon { border-color:#888880; }
+.step-icon.complete { color:#101810; background:var(--green); border-color:var(--green); }
+.dialog, .connect-dialog { color:var(--ink); background:#1b1b1a; border-color:#888880; box-shadow:8px 8px 0 #050505; }
+.dialog::backdrop, .connect-wall { background:#000d; }
+.connect-dialog-top { color:var(--ink); }
+.install-card { color:var(--ink); background:#242423; border-color:#888880; box-shadow:4px 4px 0 #050505; }
+.install-card button { color:#171713; background:var(--accent); border-color:var(--accent); }
+.chart-zero { stroke:#66665e; }
+.chart-line { stroke:var(--accent); }
+.chart-marker { stroke:var(--ink); }
+.chart-dot { fill:var(--ink); }
+.apogee-note { color:#f6dc76; background:#3a3219; border-color:#74612c; }
+.rocket-marker span { color:#161613; background:var(--accent); border-color:#161613; }
+.user-marker span { background:var(--green); border-color:#101010; box-shadow:0 0 0 1px var(--ink); }
+.ground-marker span { background:var(--ink); border-color:#101010; }
+.map { background:#1e2425; }
+.map .leaflet-tile-pane { filter:grayscale(1) invert(.92) brightness(.7) contrast(.9); }
+.leaflet-bar a { color:var(--ink)!important; background:#242423!important; border-color:#55554e!important; }
+.leaflet-control-attribution { color:var(--ink)!important; background:#1b1b1add!important; }
+.leaflet-control-attribution a { color:#e6c954!important; }
+@media (min-width:1000px) {
+  .desktop-dashboard>section { background:#1a1a19; border-color:var(--line); }
+  .desktop-map>h2 { color:var(--ink); background:#1a1a19; border-color:var(--line); }
+}
+@media (max-width:360px) {
+  .toolbar-stage span { display:none; }
+  .ground-station-button { flex-basis:40px; width:40px; height:40px; min-height:40px; }
+}
+.map .leaflet-tile-pane { filter:grayscale(1) invert(.92) brightness(.95) contrast(1.05); }

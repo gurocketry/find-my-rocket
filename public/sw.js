@@ -1,4 +1,4 @@
-const CACHE = "gur-tracker-react-v2";
+const CACHE = "gur-tracker-react-v3";
 
 async function cacheAppShell() {
   const cache = await caches.open(CACHE);
@@ -10,7 +10,7 @@ async function cacheAppShell() {
   const assets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
     .map((match) => new URL(match[1], shellUrl))
     .filter((url) => url.origin === shellUrl.origin);
-  assets.push(new URL("./icons/gur-192.png", shellUrl), new URL("./icons/gur-512.png", shellUrl));
+  assets.push(new URL("./icons/gur-dark-192.png", shellUrl), new URL("./icons/gur-dark-512.png", shellUrl));
 
   await cache.put(shellUrl, response);
   await cache.addAll([...new Set(assets.map((url) => url.href))]);
