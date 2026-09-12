@@ -268,3 +268,11 @@ button.danger { color:var(--red); background:transparent; border-color:var(--red
   .ground-station-button { flex-basis:40px; width:40px; height:40px; min-height:40px; }
 }
 .map .leaflet-tile-pane { filter:grayscale(1) invert(.92) brightness(.95) contrast(1.05); }
+/* Compact, dismissible connection settings. */
+.connect-dialog { position:relative; padding:42px 14px 14px; }
+.connect-dialog .close-dialog { position:absolute; top:7px; right:8px; display:grid; place-items:center; width:34px; height:34px; min-height:34px; padding:0; color:var(--ink); font-size:25px; line-height:1; }
+.connect-dialog .setup-view { padding:0; }
+.connect-dialog .setup-card { padding:15px; }
+.connect-dialog .setup-card h2 { margin:0; font-size:16px; }
+.connect-dialog .setup-card p { margin:5px 0 0; font-size:12px; }
+.connect-dialog .setup-controls, .connect-dialog .setup-card>.button-row { margin-top:12px; }

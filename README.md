@@ -21,8 +21,8 @@ On phones, the tracker has Telemetry (map and recovery compass), Data (live
 height and vertical-velocity plots with peak readings and apogee), Device
 (faults and mesh status), and full-height Log pages. A status toolbar stays
 visible on every page. Desktop shows these panels together in one dashboard.
-The receiver connection dialog opens on the first visit and can be reopened
-from the toolbar after a disconnect.
+The receiver connection dialog opens on the first visit, can be dismissed to
+explore the tracker, and reopens from the station icon in the toolbar.
 
 Use the HTTPS URL when opening the app from another device. `localhost` is also
 treated as secure during desktop development, but an Android phone accessing a
