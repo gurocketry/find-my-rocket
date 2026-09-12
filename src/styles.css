@@ -128,3 +128,66 @@ h1, h2 { letter-spacing: -.025em; }
 /* The flight-status bar is the sole top toolbar. */
 .status-toolbar { top: 0; padding-top: env(safe-area-inset-top); height: calc(var(--toolbar) + env(safe-area-inset-top)); }
 .workspace { top: calc(var(--toolbar) + env(safe-area-inset-top)); }
+
+/* On phones and narrow tablets, recovery lives over the map rather than below it. */
+@media (max-width:999px) {
+  .telemetry-view { position:relative; overflow:hidden; }
+  .telemetry-map { position:absolute; inset:0; height:100%; min-height:0; }
+  .telemetry-view .compass-view {
+    position:absolute;
+    z-index:600;
+    inset:auto 0 0;
+    height:25%;
+    min-height:0;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    overflow:visible;
+    background:#fff;
+    border-top:2px solid var(--ink);
+  }
+  .telemetry-view .compass-view .page-heading { display:none; }
+  .telemetry-view .compass-dial {
+    position:absolute;
+    top:-56px;
+    left:12px;
+    width:150px;
+    height:150px;
+    margin:0;
+    background:#fff;
+  }
+  .telemetry-view .compass-arrow { inset:19%; }
+  .telemetry-view .compass-arrow span { border-right-width:13px; border-left-width:13px; border-bottom-width:48px; }
+  .telemetry-view .recovery-readout {
+    width:calc(100% - 168px);
+    margin:0 0 0 168px;
+    padding:2px 0;
+    display:grid;
+    gap:4px;
+    border:0;
+    box-shadow:none;
+    text-align:left;
+  }
+  .telemetry-view .recovery-readout span { margin-bottom:1px; }
+  .telemetry-view .recovery-readout strong { font-size:12px; }
+  .telemetry-view .compass-actions {
+    position:absolute;
+    inset:auto 8px 8px;
+    margin:0;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+  }
+  .telemetry-view .compass-actions button { min-height:34px; padding:4px; font-size:9px; line-height:1.1; }
+}
+@media (max-width:360px) {
+  .telemetry-view .compass-dial { width:132px; height:132px; top:-49px; }
+  .telemetry-view .recovery-readout { width:calc(100% - 148px); margin-left:148px; }
+  .telemetry-view .recovery-readout strong { font-size:11px; }
+}
+@media (max-width:999px) {
+  .telemetry-map { inset:0 0 auto; height:75%; }
+  .telemetry-view .compass-dial { top:-75px; }
+  .telemetry-view .compass-actions button { min-width:0; }
+}
+@media (max-width:360px) {
+  .telemetry-view .compass-dial { top:-66px; }
+}
