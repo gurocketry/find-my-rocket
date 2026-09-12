@@ -124,3 +124,7 @@ h1, h2 { letter-spacing: -.025em; }
   .desktop-dashboard>section { background: #fff; border: 1px solid var(--line); border-radius: 4px; }
   .desktop-map>h2 { color: var(--ink); background: #fff; border: 1px solid var(--ink); border-radius: 2px; }
 }
+
+/* The flight-status bar is the sole top toolbar. */
+.status-toolbar { top: 0; padding-top: env(safe-area-inset-top); height: calc(var(--toolbar) + env(safe-area-inset-top)); }
+.workspace { top: calc(var(--toolbar) + env(safe-area-inset-top)); }
