@@ -306,3 +306,5 @@ button.danger { color:var(--red); background:transparent; border-color:var(--red
   .telemetry-view .compass-actions { inset:auto 8px 56px auto; width:min(230px,calc(100% - 16px)); display:grid; grid-template-columns:1fr; gap:6px; }
   .telemetry-view .compass-actions button { min-height:36px; font-size:11px; }
 }
+.telemetry-view.no-compass .telemetry-map { height:100%; }
+@media (min-width:1000px) { .desktop-map { grid-column:1/3; grid-row:1; } }

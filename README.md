@@ -17,10 +17,11 @@ reusable interface pieces in `src/components`, and the telemetry application
 state and actions in `src/tracker`. The protocol, transport, storage, and audio
 modules remain framework-independent and retain their Node test coverage.
 
-On phones, the tracker has Telemetry (map and recovery compass), Data (live
+On phones with orientation support, the tracker has Telemetry (map and recovery compass), Data (live
 height and vertical-velocity plots with peak readings and apogee), Device
-(faults and mesh status), and full-height Log pages. A status toolbar stays
-visible on every page. Desktop shows these panels together in one dashboard.
+(faults and mesh status), and full-height Log pages. Without orientation support,
+Telemetry uses the whole area for the map. A status toolbar stays visible on
+every page. Desktop shows the map, Data, Device, and Log in one dashboard.
 The receiver connection dialog opens on the first visit, can be dismissed to
 explore the tracker, and reopens from the station icon in the toolbar.
 
