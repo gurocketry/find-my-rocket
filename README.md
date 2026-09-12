@@ -17,6 +17,13 @@ reusable interface pieces in `src/components`, and the telemetry application
 state and actions in `src/tracker`. The protocol, transport, storage, and audio
 modules remain framework-independent and retain their Node test coverage.
 
+On phones, the tracker has Telemetry (map and recovery compass), Data (live
+height and vertical-velocity plots with peak readings and apogee), Device
+(faults and mesh status), and full-height Log pages. A status toolbar stays
+visible on every page. Desktop shows these panels together in one dashboard.
+The receiver connection dialog opens on the first visit and can be reopened
+from the toolbar after a disconnect.
+
 Use the HTTPS URL when opening the app from another device. `localhost` is also
 treated as secure during desktop development, but an Android phone accessing a
 LAN IP requires HTTPS.
@@ -29,7 +36,7 @@ both the Astra firmware identity and boards using the STM32 CDC identity
 `0483:5740` to connect without an app update. The default baud is `115200`,
 matching the current ground-station firmware.
 
-The SETUP view also offers `9600` for legacy receivers.
+The connection dialog also offers `9600` for legacy receivers.
 
 After the user enables phone location, each new fix is sent to the connected
 ground station as `latitude longitude\n`. If location was enabled before the
@@ -55,7 +62,7 @@ Close any native serial app before connecting because Android allows only one
 application to own the USB interface. Open the installed PWA from Chrome rather
 than an embedded browser inside another app.
 
-The first connection must be initiated with the **Connect board** button in SETUP so the
+The first connection must be initiated with the **Connect board** button in the connection dialog so the
 browser can show its device permission picker. iOS/Safari and Firefox do not
 provide the required USB APIs.
 
