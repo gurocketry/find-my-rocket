@@ -27,7 +27,7 @@ export function AppShell() {
   }, []);
   const install = async () => { await installPrompt?.prompt(); await installPrompt?.userChoice; setInstallPrompt(null); };
   return <main className="app-shell">
-    <header className="app-header"><div className="brand"><span className="brand-mark">▲</span><div><strong>ASTRA</strong><small>GROUND TRACKER</small></div></div><span className={`connection ${status.connected ? "online" : ""}`}><i />{status.connected ? "LIVE" : "OFFLINE"}</span></header>
+    <header className="app-header"><div className="brand"><img className="brand-logo" src="./icons/gur-logo.png" alt="GUR rocket logo" /><div><strong>GUR</strong><small>ASTRA GROUND TRACKER</small></div></div><span className={`connection ${status.connected ? "online" : ""}`}><i />{status.connected ? "LIVE" : "OFFLINE"}</span></header>
     <StatusToolbar onConnect={() => setConnectOpen(true)} />
     <div className="workspace">
       <div className="mobile-workspace">

@@ -13,7 +13,7 @@ export function MapView({ active }) {
     const map = L.map(target.current, { zoomControl: false }).setView(centre, 14);
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
-    mapState.current = { map, rocket: L.marker(centre, { icon: icon("rocket-marker", "<span>▲</span>", 36), zIndexOffset: 1000 }), user: L.marker(centre, { icon: icon("user-marker", "<span></span>", 22) }), accuracy: L.circle(centre, { radius: 1, color: "#54e8a2", fillOpacity: .12, weight: 1 }), flown: L.polyline([], { color: "#ff5c78", weight: 4 }).addTo(map), predicted: L.polyline([], { color: "#4cddff", weight: 3, dashArray: "8 10" }).addTo(map), grounds: new Map(), centered: false };
+    mapState.current = { map, rocket: L.marker(centre, { icon: icon("rocket-marker", "<span>▲</span>", 36), zIndexOffset: 1000 }), user: L.marker(centre, { icon: icon("user-marker", "<span></span>", 22) }), accuracy: L.circle(centre, { radius: 1, color: "#276c43", fillOpacity: .12, weight: 1 }), flown: L.polyline([], { color: "#1e1e1c", weight: 4 }).addTo(map), predicted: L.polyline([], { color: "#d8a900", weight: 3, dashArray: "8 10" }).addTo(map), grounds: new Map(), centered: false };
     const observer = new ResizeObserver(() => map.invalidateSize());
     observer.observe(target.current);
     return () => { observer.disconnect(); map.remove(); };
