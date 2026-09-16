@@ -1,7 +1,7 @@
 {
-  "name": "GUR Rocket Tracker",
-  "short_name": "Rocket Tracker",
-  "description": "Offline-capable Astra ground-station GPS tracker",
+  "name": "Find My Rocket",
+  "short_name": "Find My Rocket",
+  "description": "Find My Rocket: offline-capable Astra ground-station tracking",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

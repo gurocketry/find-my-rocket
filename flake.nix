@@ -1,5 +1,5 @@
 {
-  description = "GPS Tracker - serial GPS to interactive map";
+  description = "Find My Rocket - serial GPS to interactive map";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -27,7 +27,7 @@
         };
 
         packages.default = python.pkgs.buildPythonPackage {
-          pname = "gps-tracker";
+          pname = "find-my-rocket";
           version = "0.1.0";
           src = ./.;
           propagatedBuildInputs = with python.pkgs; [ matplotlib pyserial ];

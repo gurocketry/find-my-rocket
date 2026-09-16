@@ -1,4 +1,4 @@
-name: Deploy Web Serial PWA to GitHub Pages
+name: Deploy Find My Rocket to GitHub Pages
 
 on:
   push:

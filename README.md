@@ -1,9 +1,11 @@
-# Web Serial PWA
+# Find My Rocket
 
-This Vite + React single-page app runs the GPS tracker entirely in the browser. It reads Astra
+Find My Rocket is a Vite + React single-page app that runs entirely in the browser. It reads Astra
 telemetry over USB, parses and recovers packets, stores the flight log in
 IndexedDB, shows the rocket and phone location on the map, predicts the current
 trajectory, and remains installable/offline as a PWA.
+
+Repository: https://github.com/gurocketry/find-my-rocket
 
 ## Development
 
